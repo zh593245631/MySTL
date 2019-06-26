@@ -10,19 +10,22 @@ namespace mystl
 		typedef const T* citerator;
 	public:
 		//µü´úÆ÷
-		iterator begin() { return _begin; }
-		iterator end() { return _end; }
-		iterator rbegin() { return _end; }
-		iterator rend() { return _begin; }
-		citerator cbegin() { return _begin; }
-		citerator cend() { return _end; }
-		citerator crbegin() { return _end; }
-		citerator crend() { return _begin; }
+		iterator begin()const { return _begin; }
+		iterator end()const { return _end; }
+		iterator rbegin()const { return _end; }
+		iterator rend()const { return _begin; }
+		citerator cbegin()const { return _begin; }
+		citerator cend()const { return _end; }
+		citerator crbegin()const { return _end; }
+		citerator crend()const { return _begin; }
 
 
-		vector(){}
-		size_t size() { return _end - _begin; }
-		size_t capacity() { return _endOfstorage - _begin; }
+		size_t size()const { return _end - _begin; }
+		size_t capacity()const { return _endOfstorage - _begin; }
+
+
+		vector():_begin(nullptr),_end(nullptr),_endOfstorage(nullptr){}
+
 		vector(size_t n, const T& value = T())
 		{
 			reserve(n);
@@ -31,29 +34,91 @@ namespace mystl
 				push_back(value);
 			}
 		}
-		iterator insert(iterator pos, const T& value)
+		template<class inputiterator>
+		vector(inputiterator beg, inputiterator end)
 		{
+			reserve(end - beg);
+			while (beg != end)
+			{
+				push_back(*beg);
+				++beg;
+			}
+		}
+		vector(const vector<T>& v)
+		{
+			reserve(v.capacity());
+			citerator cur = v.cbegin();
+			iterator vit = begin();
+			while (cur != v.cend())
+			{
+				*vit = *cur;
+				++cur;
+				++vit;
+			}
+			_end = _begin + v.size();
+
 
 		}
-		void reserve(size_t n)
+		void push_back(const T& value)
+		{
+			insert(_end, value);
+		}
+		void pop_back()
+		{
+			erase(_end - 1);
+		}
+		T& operator[](int n)
+		{
+			return _begin[n];
+		}
+		vector<T>& operator=(vector<T>& v)
+		{
+			vector<T> tmp(v);
+			swap(tmp);
+			return *this;
+		}
+		void swap(vector<T>& v)
+		{
+			std::swap(_begin, v._begin);
+			std::swap(_end, v._end);
+			std::swap(_endOfstorage, v._endOfstorage);
+		}
+		iterator insert(iterator pos, const T& value)
+		{
+			if (_end == _endOfstorage) {
+				size_t size = pos - _begin;
+				size_t n = capacity() == 0 ? 10 : 2 * capacity();
+				check(n);
+				pos = _begin + size;
+			}
+
+			iterator end = _end;
+			while (end > pos)
+			{
+				*end = *(end - 1);
+				--end;
+			}
+			*pos = value;
+			++_end;
+			return pos;
+		}
+
+		iterator erase(iterator pos)
+		{
+			iterator cur = pos + 1;
+			while (cur != _end)
+			{
+				*(cur-1) = *cur;
+				++cur;
+			}
+			--_end;
+			return pos;
+		}
+		void reserve(const size_t n)
 		{
 			if (n > capacity())
 			{
-				size_t N = size();
-				T* tmp = new T[n];
-
-				if (_begin) 
-				{
-					for(int i = 0; i<N; ++i)
-					{
-						tmp[i] = _begin[i];
-					}
-					delete[] _begin;
-				}
-
-				_begin = tmp;
-				_end = _begin + N;
-				_endOfstorage = _begin + n;
+				check(n);
 			}
 		}
 
@@ -69,7 +134,7 @@ namespace mystl
 				reserve(n);
 			}
 			//À©´ósize;
-			iterator end = _start + n;
+			iterator end = _begin + n;
 			while (_end != end)
 			{
 				*_end = value;
@@ -83,6 +148,24 @@ namespace mystl
 			if(_begin != nullptr)
 				delete[]_begin;
 			_begin = _end = _endOfstorage = nullptr;
+		}
+	private:
+		void check(const int n)
+		{
+			
+			size_t Size = size();
+			T* tmp = new T[n];
+
+			if (_begin) {
+				for (size_t i = 0; i < Size; ++i)
+				{
+					tmp[i] = _begin[i];
+				}
+				delete[] _begin;
+			}
+			_begin = tmp;
+			_end = _begin + Size;
+			_endOfstorage = _begin + n;
 		}
 	private:
 		iterator _begin = nullptr;
